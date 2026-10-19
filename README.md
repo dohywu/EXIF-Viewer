@@ -5,8 +5,8 @@
 <h1 align="center">Metadata Inspector</h1>
 
 <p align="center">
-  A native macOS app that shows <b>every</b> piece of metadata an image carries.<br>
-  Drop a <b>ComfyUI</b> image on it and the prompts and the whole workflow come back.
+  이미지를 드래그하면 그 안에 들어 있는 모든 메타데이터를 보여주는 macOS 앱.<br>
+  특히 <b>ComfyUI</b>로 생성한 이미지의 프롬프트와 워크플로우를 그대로 복원합니다.
 </p>
 
 <p align="center">
@@ -17,69 +17,67 @@
 </p>
 
 <p align="center">
-  <img src="docs/screenshot-overview.png" alt="App window" width="100%">
+  <img src="docs/screenshot-overview.png" alt="앱 화면" width="100%">
 </p>
 
-## What it reads
+## 무엇을 읽나
 
-| Source | Details |
+| 소스 | 내용 |
 | --- | --- |
-| ImageIO | EXIF, TIFF, IPTC, GPS, JFIF, PNG, HEIC/WebP container properties, color profile |
-| XMP | Full tag tree, nested structures included |
-| PNG chunks | Raw walk of every chunk: `tEXt`, `zTXt` (zlib-inflated), `iTXt`, plus type, size and offset |
-| ComfyUI | `prompt` (API graph) and `workflow` (GUI graph) JSON, from PNG text chunks or EXIF tags |
-| A1111 / Forge | `parameters` block → positive, negative, steps, sampler, CFG, seed, size, model hash … |
-| InvokeAI · Midjourney | Embedded JSON and text payloads shown as they are |
+| ImageIO | EXIF, TIFF, IPTC, GPS, JFIF, PNG, HEIC/WebP 컨테이너 속성, 컬러 프로파일 |
+| XMP | 중첩 구조를 포함한 전체 태그 트리 |
+| PNG 청크 | 모든 청크를 직접 파싱: `tEXt`, `zTXt`(zlib 해제), `iTXt` + 타입·크기·오프셋 |
+| ComfyUI | `prompt`(API 그래프), `workflow`(GUI 그래프) JSON — PNG 텍스트 청크 또는 EXIF 태그에서 |
+| A1111 / Forge | `parameters` 블록 → positive, negative, steps, sampler, CFG, seed, size, model hash … |
+| InvokeAI · Midjourney | 내장 JSON / 텍스트 페이로드를 그대로 표시 |
 
-## ComfyUI analysis
+## ComfyUI 해석
 
-The graph is reconstructed and walked, not just dumped.
+JSON을 그냥 덤프하지 않고 그래프를 복원해서 따라갑니다.
 
-- **Prompts** — the sampler's `positive` / `negative` links are followed backwards to the text that actually fed it, through however many conditioning nodes sit in between.
-- **Checkpoint** — resolved through LoRA loaders and model patchers, so a LoRA file name is never mistaken for the checkpoint.
-- **Sampling values** — seed, steps, CFG, sampler, scheduler, denoise, latent size, including custom-sampler graphs where those live on `*SchedulerNode`, `SamplerSelect` or `RandomNoise`.
-- **LoRAs** — all of them, with model/clip strengths, plus the VAE loader.
-- Each sampling pass in the graph gets its own card.
-- **Node browser** — searchable and expandable; every input shows either its literal value or the node it is linked from. Export the workflow JSON to load it back into ComfyUI.
+- **프롬프트** — 샘플러의 `positive` / `negative` 링크를 거꾸로 따라가, 실제로 샘플러에 들어간 텍스트를 찾습니다. 중간에 conditioning 노드가 몇 개 끼어 있어도 추적합니다.
+- **체크포인트** — LoRA 로더와 model patcher를 통과해 끝까지 올라갑니다. LoRA 파일명을 체크포인트로 착각하지 않습니다.
+- **샘플링 값** — seed, steps, CFG, sampler, scheduler, denoise, latent 크기. 커스텀 샘플러 그래프(`*SchedulerNode`, `SamplerSelect`, `RandomNoise`)에 흩어져 있어도 모읍니다.
+- **LoRA** — 전부 나열하고 model/clip strength까지 표시. VAE 로더도 함께.
+- 샘플링 패스가 여러 개면 패스마다 카드가 따로 생깁니다.
+- **노드 브라우저** — 검색·펼치기 가능. 각 입력은 리터럴 값이거나 어느 노드에서 연결됐는지 보여줍니다. 워크플로우 JSON을 내보내 ComfyUI에 다시 불러올 수 있습니다.
 
-## Tabs
+## 탭 구성
 
-1. **Overview** — preview, generation summary, file and image facts, camera and GPS when present
-2. **Prompt** — one card per sampling pass, copy button on every prompt
-3. **Workflow** — node browser with search and JSON export
-4. **EXIF · All** — searchable tree of every property, XMP tag and PNG chunk
-5. **Raw** — the raw text payloads, pretty-printed when they are JSON
+1. **개요** — 미리보기, 생성 정보 요약, 파일·이미지 정보, 카메라/GPS(있을 때)
+2. **프롬프트** — 샘플링 패스별 카드, 프롬프트마다 복사 버튼
+3. **워크플로우** — 노드 브라우저, 검색, JSON 내보내기
+4. **EXIF · 전체** — 모든 속성·XMP 태그·PNG 청크의 검색 가능한 트리
+5. **원본 데이터** — 원본 텍스트 페이로드(JSON은 보기 좋게 정렬)
 
-## Build
+## 빌드
 
 ```bash
 ./build.sh            # dist/Metadata Inspector.app
-./build.sh --install  # installs straight into /Applications
+./build.sh --install  # /Applications 에 바로 설치
 ```
 
-No dependencies — Swift 6, SwiftUI, ImageIO and Compression only. The output is an ad-hoc signed native app for macOS 14+.
+의존성 없음. Swift 6 / SwiftUI / ImageIO / Compression 만 사용합니다. 결과물은 ad-hoc 서명된 네이티브 앱(macOS 14+).
 
-## Shortcuts
+## 단축키
 
-| Key | Action |
+| 키 | 동작 |
 | --- | --- |
-| ⌘O | Open images or a folder |
-| ⌘E | Export a full metadata report (.txt) |
-| ⇧⌘S | Save the ComfyUI workflow JSON |
-| ⌘R | Reveal in Finder |
-| ⇧⌘⌫ | Clear the list |
+| ⌘O | 이미지 또는 폴더 열기 |
+| ⌘E | 전체 메타데이터 리포트 내보내기(.txt) |
+| ⇧⌘S | ComfyUI 워크플로우 JSON 저장 |
+| ⌘R | Finder에서 보기 |
+| ⇧⌘⌫ | 목록 비우기 |
 
-Besides drag and drop, files can be opened from Finder ("Open With") or passed as command-line arguments. Drop a folder and every image inside it is read at once.
+드래그 앤 드롭 외에 Finder의 "열기 방식", 커맨드라인 인자로도 파일을 넘길 수 있습니다. 폴더를 드롭하면 안에 있는 이미지를 한 번에 읽습니다.
 
-## Layout
+## 구조
 
 ```
 Sources/EXIFViewer/
-  App/      app entry, delegate (Finder/CLI file opening), view model
-  Core/     PNG chunk reader, ImageIO extractor, ComfyUI graph parser, metadata tree
-  UI/       theme, sidebar, detail shell, five tabs
-tools/makeicon.swift   generates Resources/AppIcon.icns
-build.sh               release build + .app bundling + ad-hoc signing
+  App/      앱 진입점, 델리게이트(Finder·CLI 파일 열기), 뷰 모델
+  Core/     PNG 청크 리더, ImageIO 추출기, ComfyUI 그래프 파서, 메타데이터 트리
+  UI/       테마, 사이드바, 디테일 셸, 5개 탭
+tools/makeicon.swift   Resources/AppIcon.icns 생성
+build.sh               릴리스 빌드 + .app 번들링 + ad-hoc 서명
 ```
-
-> The app's interface is currently in Korean.
